@@ -1,0 +1,37 @@
+.global _start
+_start:
+
+subroutine:
+
+	// Initializations
+	LDR R4, =0xFF200050
+	LDRB R4, [R4] // N
+	LDR R1, =0xFF200040
+	LDRB R1, [R1] // X, PRN(0), last byte since little endian
+	SUB R2, R1, #1 // PRN(1)
+	MOV R3, #2
+	MUL R3, R1 // PRN(2)
+	MOV R7, #3 // Counter=3
+
+	// If N<3 then give seeds
+	CMP R4, #0
+	MOVEQ R0, R1 // PRN(N) to R0
+	CMP R4, #1
+	MOVEQ R0, R2
+	CMP R4, #2
+	MOVEQ R0, R3
+
+
+startloop: // If N>=3 then solve for PRN(3) onwards
+	CMP R7, R4
+		BGT endloop // If Counter==N then end
+		ADD R0, R1, R2
+		ADD R0, R0, R3 // PRN(0)+PRN(1)+PRN(2)
+		MOV R1, R2
+		MOV R2, R3
+		MOV R3, R0 // Shift PRNs
+		ADD R7, R7, #1 // Counter += 1
+		B startloop
+
+endloop:
+	BX LR
